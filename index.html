@@ -436,6 +436,18 @@ document.querySelectorAll(".mode-btn").forEach(btn=>{
 document.getElementById("date-from").onchange=()=>{document.querySelectorAll(".preset").forEach(b=>b.className="preset");render();};
 document.getElementById("date-to").onchange=()=>{document.querySelectorAll(".preset").forEach(b=>b.className="preset");render();};
 
+
+// === DEBUG ===
+(function(){
+  const dbgFrom = document.getElementById("date-from").value;
+  const dbgTo = document.getElementById("date-to").value;
+  const dbgFd = RAW.filter(d=>[d.cd,d.ad,d.lc,d.cw,d.cl].filter(Boolean).some(dt=>dt>=dbgFrom&&dt<=dbgTo));
+  const dbgBy = {FF:[], JM:[]};
+  dbgFd.forEach(d=>{if(dbgBy[d.o])dbgBy[d.o].push(d);});
+  const dbgWon = dbgBy.FF.filter(d=>d.s==="Closed won").length + dbgBy.JM.filter(d=>d.s==="Closed won").length;
+  console.log("DBG from="+dbgFrom+" to="+dbgTo+" fd="+dbgFd.length+" FF="+dbgBy.FF.length+" JM="+dbgBy.JM.length+" won="+dbgWon);
+  console.log("DBG RAW[0].o="+RAW[0].o+" RAW[0].s="+RAW[0].s+" RAW[0].cd="+RAW[0].cd);
+})();
 render();
 </script>
 </body>
