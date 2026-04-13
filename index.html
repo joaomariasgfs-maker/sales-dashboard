@@ -145,6 +145,9 @@ function compute(from,to){
   const fd=RAW.filter(d=>[d.cd,d.ad,d.lc,d.cw,d.cl].filter(Boolean).some(dt=>dt.substring(0,10)>=from&&dt.substring(0,10)<=to));
   const by={FF:[],JM:[]};
   fd.forEach(d=>{if(by[d.o])by[d.o].push(d);});
+  // Snapshot buckets (all deals, no date filter) — for Signing/Contracts Unicre counts
+  const bySnap={FF:[],JM:[]};
+  RAW.forEach(d=>{if(bySnap[d.o])bySnap[d.o].push(d);});
 
   const months=monthsBetween(from,to);
   const goalPerSDR=GOAL_PER_SDR*months;
@@ -153,10 +156,20 @@ function compute(from,to){
 
   const om={};
   for(const [k,od] of Object.entries(by)){
-    const won=od.filter(d=>{if(!isWon(d,mode))return false;if(d.s==="Closed won")return d.ad&&d.ad.substring(0,10)>=from&&d.ad.substring(0,10)<=to;return true;});
+    // Closed won: filtered by closedate in period
+    const won_cw=od.filter(d=>d.s==="Closed won"&&d.ad&&d.ad.substring(0,10)>=from&&d.ad.substring(0,10)<=to);
+    // Contracts Unicre + Signing: snapshot (all current, regardless of period activity)
+    const snap=bySnap[k]||[];
+    const won_cu=(mode==="won+cu"||mode==="won+si+cu")?snap.filter(d=>d.s==="Contracts Unicre"):[];
+    const won_si=mode==="won+si+cu"?snap.filter(d=>d.s==="Signing"):[];
+    const won=[...won_cw,...won_cu,...won_si];
     const lost=od.filter(d=>d.s==="Closed lost"&&d.ad&&d.ad.substring(0,10)>=from&&d.ad.substring(0,10)<=to);
     const active=od.filter(d=>ACTIVE.includes(d.s)&&!isWon(d,mode));
-    const worked=od.filter(d=>d.na>0||isWon(d,mode)||d.s==="Closed lost");
+    // worked: period-worked deals + snapshot won deals not already in od
+    const odKeys=new Set(od.map(d=>d.dc+"§"+d.cd));
+    const extraWon=[...won_cu,...won_si].filter(d=>!odKeys.has(d.dc+"§"+d.cd));
+    const workedBase=od.filter(d=>d.na>0||d.s==="Closed won"||d.s==="Closed lost");
+    const worked=[...workedBase,...extraWon];
     const wAct=od.filter(d=>d.na>0);
     const cNA=od.filter(d=>(isWon(d,mode)||d.s==="Closed lost")&&d.na===0);
     const wwd=won.filter(d=>d.dc>0);
