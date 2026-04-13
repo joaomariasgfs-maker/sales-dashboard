@@ -142,7 +142,7 @@ function monthsBetween(from,to){
 
 function compute(from,to){
   const mode=wonMode;
-  const fd=RAW.filter(d=>[d.cd,d.ad,d.lc,d.cw,d.cl].filter(Boolean).some(dt=>dt>=from&&dt<=to));
+  const fd=RAW.filter(d=>[d.cd,d.ad,d.lc,d.cw,d.cl].filter(Boolean).some(dt=>dt.substring(0,10)>=from&&dt.substring(0,10)<=to));
   const by={FF:[],JM:[]};
   fd.forEach(d=>{if(by[d.o])by[d.o].push(d);});
 
@@ -153,8 +153,8 @@ function compute(from,to){
 
   const om={};
   for(const [k,od] of Object.entries(by)){
-    const won=od.filter(d=>isWon(d,mode));
-    const lost=od.filter(d=>d.s==="Closed lost");
+    const won=od.filter(d=>isWon(d,mode)&&d.ad&&d.ad.substring(0,10)>=from&&d.ad.substring(0,10)<=to);
+    const lost=od.filter(d=>d.s==="Closed lost"&&d.ad&&d.ad.substring(0,10)>=from&&d.ad.substring(0,10)<=to);
     const active=od.filter(d=>ACTIVE.includes(d.s)&&!isWon(d,mode));
     const worked=od.filter(d=>d.na>0||isWon(d,mode)||d.s==="Closed lost");
     const wAct=od.filter(d=>d.na>0);
